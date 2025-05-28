@@ -1,4 +1,5 @@
 let bancoProdutos = [];
+let produtosAdicionados = [];
 
 fetch('produtos_unicode_final_completo.json')
   .then(response => response.json())
@@ -10,80 +11,89 @@ fetch('produtos_unicode_final_completo.json')
     console.error("Erro ao carregar o banco de dados:", error);
   });
 
-// Login simples
-document.getElementById('botao-login').addEventListener('click', function () {
-  const usuario = document.getElementById('usuario').value;
-  const senha = document.getElementById('senha').value;
+const usuarios = {
+  Designer: "1234",
+  Admin: "admin123"
+};
 
-  if ((usuario === "Designer" && senha === "Lopes@2025") || (usuario === "Teste" && senha === "1234")) {
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('main-content').classList.remove('hidden');
+document.getElementById("botao-login").addEventListener("click", () => {
+  const usuario = document.getElementById("usuario").value.trim();
+  const senha = document.getElementById("senha").value.trim();
+  const erroLogin = document.getElementById("erro-login");
+
+  if (usuarios[usuario] && usuarios[usuario] === senha) {
+    document.getElementById("login-screen").classList.add("hidden");
+    document.getElementById("main-content").classList.remove("hidden");
   } else {
-    document.getElementById('erro-login').innerText = "Usuário ou senha incorretos.";
+    erroLogin.textContent = "Usuário ou senha incorretos.";
   }
 });
 
-const produtosAdicionados = [];
+function normalizarMarca(marca) {
+  if (!marca) return "";
+  let nomesPossiveis = ["VONDER", "3M", "HERC", "ATLAS", "DELTA", "CIVITT", "ASTRA", "TRAMONTINA", "HTH", "CORTAG", "LONAX", "ACQUAFLEX", "VENTI-DELTA", "OUROLUX", "FAMASTIL", "ZAGONEL"];
+  for (let nome of nomesPossiveis) {
+    if (marca.toUpperCase().includes(nome)) return nome;
+  }
+  return marca;
+}
 
 function adicionarProduto() {
-  const codigo = document.getElementById('codigo').value.trim();
-  const preco = document.getElementById('preco').value.trim();
+  const input = document.getElementById("codigo");
+  const precoInput = document.getElementById("preco");
+  const tabela = document.getElementById("tabela");
+  const linhas = input.value.trim().split('\n');
 
-  if (!codigo) {
-    alert("Informe o código do produto.");
-    return;
-  }
+  linhas.forEach(linha => {
+    const partes = linha.trim().split(/\s(.+)/);
+    if (partes.length < 2) return;
+    const codigo = partes[0];
+    const produto = bancoProdutos.find(p => String(p.CODIGO) === codigo);
 
-  const produto = bancoProdutos.find(p => p.codigo == codigo);
+    if (!produto || produtosAdicionados.find(p => p.codigo === codigo)) return;
 
-  if (!produto) {
-    alert("Código não encontrado no banco de dados.");
-    return;
-  }
+    const nome = produto.NOME?.trim() || partes[1].trim();
+    const preco = precoInput.value.trim();
+    const departamento = produto.DEPTO || "";
+    const marcaOriginal = produto.MARCA || "";
+    const marca = normalizarMarca(marcaOriginal);
+    const codigo2 = `CÓD. ${codigo}`;
+    const desc = nome;
+    const unicode = `${codigo}\t${desc}\t${preco}\t${codigo2}\t${departamento}\t${desc}\t${marca}\t\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${marca}.jpg\t\\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg`;
 
-  const precoFormatado = preco ? preco.replace(',', '.') : "";
-  const textoUnicode = [
-    produto.codigo,
-    produto.nome,
-    precoFormatado,
-    `CÓD. ${produto.codigo}`,
-    produto.departamento || "",
-    produto.descricao || produto.nome || "",
-    produto.marca || "",
-    produto.logo || "",
-    produto.imagem || ""
-  ].join('\t');
+    const linhaTabela = `
+      <tr>
+        <td>${codigo}</td>
+        <td>${nome}</td>
+        <td>${preco}</td>
+        <td>${departamento}</td>
+        <td>${marca}</td>
+        <td>\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${marca}.jpg</td>
+        <td>\\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg</td>
+        <td>${unicode}</td>
+      </tr>
+    `;
+    tabela.insertAdjacentHTML("beforeend", linhaTabela);
 
-  produtosAdicionados.push(textoUnicode);
+    produtosAdicionados.push({ codigo, unicode });
+  });
 
-  const linha = document.createElement('tr');
-  linha.innerHTML = `
-    <td>${produto.codigo}</td>
-    <td>${produto.nome}</td>
-    <td>${preco}</td>
-    <td>${produto.departamento || ""}</td>
-    <td>${produto.marca || ""}</td>
-    <td>${produto.logo || ""}</td>
-    <td>${produto.imagem || ""}</td>
-    <td>${textoUnicode}</td>
-  `;
-  document.getElementById('tabela').appendChild(linha);
-
-  document.getElementById('codigo').value = '';
-  document.getElementById('preco').value = '';
+  input.value = "";
+  precoInput.value = "";
 }
 
 function baixarTXT() {
-  const cabecalho = "CODIGO\tDESCRIÇÃO\tPRECO\tCODIGO2\tDEPTO\tDESCRICAO\tMARCA\t@FOTOMARCA\t@FOTOPRODUTO";
-  const conteudo = [cabecalho, ...produtosAdicionados].join('\r\n');
+  if (produtosAdicionados.length === 0) {
+    alert("Nenhum produto adicionado.");
+    return;
+  }
 
-  const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
+  let conteudo = "CODIGO\tDESCRIÇÃO\tPRECO\tCODIGO2\tDEPTO\tDESCRICAO\tMARCA\t@FOTOMARCA\t@FOTOPRODUTO\n";
+  conteudo += produtosAdicionados.map(p => p.unicode).join("\n");
 
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'produtos_unicode.txt';
-  a.click();
-
-  URL.revokeObjectURL(url);
+  const blob = new Blob([conteudo], { type: "text/plain;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "produtos_unicode.txt";
+  link.click();
 }
