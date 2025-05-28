@@ -1,93 +1,74 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const loginScreen = document.getElementById("login-screen");
-  const mainContent = document.getElementById("main-content");
-  const botaoLogin = document.getElementById("botao-login");
-  const erroLogin = document.getElementById("erro-login");
+// Lista de usuários permitidos
+const usuariosAutorizados = [
+  { user: "Designer", pass: "Lopes@2025" },
+  { user: "Teste", pass: "1234" }
+];
 
-  botaoLogin.addEventListener("click", () => {
-    const usuario = document.getElementById("usuario").value;
-    const senha = document.getElementById("senha").value;
+// Função de login
+document.getElementById("botao-login").addEventListener("click", () => {
+  const usuario = document.getElementById("usuario").value.trim();
+  const senha = document.getElementById("senha").value.trim();
 
-    const usuariosAutorizados = [
-      { user: "Designer", pass: "Lopes@2025" },
-      { user: "Teste", pass: "1234" }
-    ];
+  const autorizado = usuariosAutorizados.some(u => u.user === usuario && u.pass === senha);
 
-    const autorizado = usuariosAutorizados.some(u => u.user === usuario && u.pass === senha);
-
-    if (autorizado) {
-      loginScreen.classList.add("hidden");
-      mainContent.classList.remove("hidden");
-      carregarProdutos();
-    } else {
-      erroLogin.textContent = "Usuário ou senha incorretos.";
-    }
-  });
+  if (autorizado) {
+    document.getElementById("login-screen").classList.add("hidden");
+    document.getElementById("main-content").classList.remove("hidden");
+  } else {
+    document.getElementById("erro-login").innerText = "Usuário ou senha incorretos.";
+  }
 });
 
+// Dados
 let bancoProdutos = [];
 
-function carregarProdutos() {
-  fetch("produtos_unicode_completo.json")
-    .then(response => response.json())
-    .then(data => {
-      bancoProdutos = data;
-      console.log("Banco carregado:", bancoProdutos.length, "produtos");
-    })
-    .catch(error => {
-      console.error("Erro ao carregar banco:", error);
-    });
-}
+fetch("produtos_unicode_completo.json")
+  .then(res => res.json())
+  .then(data => {
+    bancoProdutos = data;
+    console.log("Banco carregado:", bancoProdutos.length, "produtos");
+  });
 
 function adicionarProduto() {
   const codigo = document.getElementById("codigo").value.trim();
   const preco = document.getElementById("preco").value.trim();
 
-  if (!codigo || !preco) {
-    alert("Preencha código e preço.");
-    return;
-  }
-
   const produto = bancoProdutos.find(p => p.codigo === codigo);
 
   if (!produto) {
-    alert("Produto não encontrado.");
+    alert("Código não encontrado no banco de dados.");
     return;
   }
 
-  const linha = document.createElement("tr");
+  const tabela = document.getElementById("tabela");
+  const linha = tabela.insertRow();
 
-  const textoUnicode = produto.unicode
-    .replace("[PRECO]", preco)
-    .replace("[DEPTO]", "GERAL"); // Você pode trocar "GERAL" por outro departamento
+  const textoUnicode = `${codigo} ${produto.nome} ${preco ? preco : ""} CÓD. ${codigo} ${produto.nome} ${produto.marca} \\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${produto.logo} \\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg`;
 
   linha.innerHTML = `
-    <td>${produto.codigo}</td>
+    <td>${codigo}</td>
     <td>${produto.nome}</td>
     <td>${preco}</td>
-    <td>GERAL</td>
+    <td>${produto.departamento || ""}</td>
     <td>${produto.marca}</td>
-    <td>${produto["@Logo"]}</td>
-    <td>${produto["@Imagem"]}</td>
+    <td>\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${produto.logo}</td>
+    <td>\\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg</td>
     <td>${textoUnicode}</td>
   `;
-
-  document.getElementById("tabela").appendChild(linha);
 }
 
 function baixarTXT() {
-  const linhas = Array.from(document.querySelectorAll("#tabela tr"))
-    .map(tr => tr.children[7]?.textContent)
-    .filter(Boolean)
-    .join("\n");
+  const linhas = [];
+  const rows = document.querySelectorAll("#tabela tr");
+  rows.forEach(row => {
+    const cols = row.querySelectorAll("td");
+    const texto = cols[7]?.innerText;
+    if (texto) linhas.push(texto);
+  });
 
-  const blob = new Blob([linhas], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "produtos_unicode.txt";
-  a.click();
-
-  URL.revokeObjectURL(url);
+  const blob = new Blob([linhas.join("\n")], { type: "text/plain;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "tabloide_unicode.txt";
+  link.click();
 }
