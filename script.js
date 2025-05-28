@@ -1,89 +1,95 @@
-let produtos = [];
-let tabela = document.getElementById("tabela");
+let bancoDados = [];
+let produtosSelecionados = [];
 
-// Carregar banco de dados JSON
-fetch("produtos_unicode_final_completo.json")
-  .then((response) => response.json())
-  .then((data) => {
-    produtos = data;
-  })
-  .catch((error) => {
-    console.error("Erro ao carregar o JSON:", error);
+fetch('produtos_unicode_completo.json')
+  .then(response => response.json())
+  .then(data => {
+    bancoDados = data;
+    console.log(`Banco carregado: ${bancoDados.length} produtos`);
   });
 
-// Função de login
-document.getElementById("botao-login").addEventListener("click", function () {
-  const user = document.getElementById("usuario").value;
-  const pass = document.getElementById("senha").value;
-
-  const validUsers = [
-    { usuario: "Designer", senha: "Lopes@2025" },
-    { usuario: "teste", senha: "1234" }
-  ];
-
-  const autorizado = validUsers.some(
-    (credencial) => credencial.usuario === user && credencial.senha === pass
-  );
-
-  if (autorizado) {
-    document.getElementById("login-screen").classList.add("hidden");
-    document.getElementById("main-content").classList.remove("hidden");
-  } else {
-    document.getElementById("erro-login").textContent = "Usuário ou senha incorretos.";
-  }
-});
-
-// Função para adicionar produto à tabela
 function adicionarProduto() {
-  const codigo = document.getElementById("codigo").value;
-  const preco = document.getElementById("preco").value;
+  const codigo = document.getElementById('codigo').value.trim();
+  const preco = document.getElementById('preco').value.trim();
 
-  const produto = produtos.find(p => p.codigo === codigo);
+  if (!codigo) return;
 
-  if (produto) {
-    const imagem = `\\\\172.30.217.2\\winthor\\IMAGEM/${codigo}.jpg`;
-    const logo = `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS/${produto.logo}`;
-    const unicode = `${codigo} - ${produto.nome} - ${preco}`;
-
-    const linha = `
-      <tr>
-        <td>${codigo}</td>
-        <td>${produto.nome}</td>
-        <td>${preco}</td>
-        <td>${produto.departamento}</td>
-        <td>${produto.marca}</td>
-        <td>${logo}</td>
-        <td>${imagem}</td>
-        <td>${unicode}</td>
-      </tr>
-    `;
-
-    tabela.innerHTML += linha;
-  } else {
-    alert("Produto não encontrado!");
+  const produto = bancoDados.find(p => p.codigo === codigo);
+  if (!produto) {
+    alert("Código não encontrado no banco de dados.");
+    return;
   }
 
-  document.getElementById("codigo").value = "";
-  document.getElementById("preco").value = "";
+  produto.preco = preco || produto.preco || "";
+
+  produtosSelecionados.push(produto);
+  atualizarTabela();
 }
 
-// Função para exportar a tabela como arquivo .txt
-function baixarTXT() {
-  let texto = "";
-  const linhas = tabela.querySelectorAll("tr");
+function colarLista() {
+  const lista = document.getElementById("lista-codigos").value.trim();
+  const linhas = lista.split('\n');
 
-  for (let i = 0; i < linhas.length; i++) {
-    const colunas = linhas[i].querySelectorAll("td");
-    if (colunas.length > 0) {
-      texto += `${colunas[7].innerText}\r\n`; // Texto unicode
+  for (const linha of linhas) {
+    const partes = linha.trim().split(/\t+/);
+    const codigo = partes[0]?.trim();
+    const preco = ""; // O usuário poderá editar depois, se quiser.
+
+    if (codigo) {
+      const produto = bancoDados.find(p => p.codigo === codigo);
+      if (produto && !produtosSelecionados.find(p => p.codigo === codigo)) {
+        produto.preco = preco;
+        produtosSelecionados.push(produto);
+      }
     }
   }
 
-  const blob = new Blob(["\ufeff" + texto], { type: "text/plain;charset=utf-8" });
+  atualizarTabela();
+}
+
+function atualizarTabela() {
+  const tabela = document.getElementById("tabela");
+  tabela.innerHTML = "";
+
+  for (const p of produtosSelecionados) {
+    const linha = `
+      <tr>
+        <td>${p.codigo}</td>
+        <td>${p.nome}</td>
+        <td>${p.preco || ""}</td>
+        <td>${p.departamento || ""}</td>
+        <td>${p.marca || ""}</td>
+        <td>${p.logo || ""}</td>
+        <td>${p.imagem || ""}</td>
+        <td>${`${p.codigo} - ${p.nome} -`}</td>
+      </tr>`;
+    tabela.innerHTML += linha;
+  }
+}
+
+function baixarTXT() {
+  let txt = "CODIGO\tDESCRIÇÃO\tPRECO\tCODIGO2\tDEPTO\tDESCRICAO\tMARCA\t@FOTOMARCA\t@FOTOPRODUTO\n";
+
+  for (const p of produtosSelecionados) {
+    const linha = [
+      p.codigo,
+      p.nome,
+      p.preco || "",
+      `CÓD. ${p.codigo}`,
+      p.departamento || "",
+      p.nome,
+      p.marca || "",
+      p.logo || "",
+      p.imagem || ""
+    ].join('\t');
+
+    txt += linha + '\n';
+  }
+
+  const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "tabloide_unicode.txt";
+  a.download = "produtos_unicode_exportado.txt";
   a.click();
-  URL.revokeObjectURL(url);
 }
