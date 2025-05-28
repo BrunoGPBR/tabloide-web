@@ -6,39 +6,21 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f7f7f7;
-    }
-    h1 {
-      text-align: center;
-    }
-    input, button {
-      margin: 5px;
-      padding: 8px;
-    }
-    table {
-      width: 100%;
-      margin-top: 20px;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-    button {
-      cursor: pointer;
+      background: #fff;
+      margin: 0;
+      padding: 0;
     }
     #login-screen {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: #fff;
+      height: 100vh;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      flex-direction: column;
-      z-index: 9999;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      width: 200px;
     }
     .hidden {
       display: none;
@@ -48,22 +30,22 @@
 <body>
   <div id="login-screen">
     <h2>Acesso Restrito</h2>
-    <input type="text" id="usuario" placeholder="Usuário" autocomplete="off" />
-    <input type="password" id="senha" placeholder="Senha" autocomplete="off" />
+    <input type="text" id="usuario" placeholder="Usuário" />
+    <input type="password" id="senha" placeholder="Senha" />
     <button id="botao-login">Entrar</button>
-    <p id="erro-login" style="color: red;"></p>
+    <p id="erro-login" style="color:red;"></p>
   </div>
 
   <div id="main-content" class="hidden">
     <h1>Gerador de Tabloide (Exporta InDesign)</h1>
-    <label for="codigo">Código do Produto:</label>
+    <label>Código do Produto:</label>
     <input type="number" id="codigo" />
-    <label for="preco">Preço:</label>
+    <label>Preço:</label>
     <input type="text" id="preco" />
     <button onclick="adicionarProduto()">Adicionar Produto</button>
     <button onclick="baixarTXT()">Exportar TXT</button>
 
-    <table>
+    <table border="1" width="100%" style="margin-top: 20px;">
       <thead>
         <tr>
           <th>Código</th><th>Nome</th><th>Preço</th><th>Departamento</th><th>Marca</th><th>@Logo</th><th>@Imagem</th><th>Texto Unicode</th>
