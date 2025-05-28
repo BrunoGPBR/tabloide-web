@@ -1,113 +1,89 @@
-let bancoProdutos = {};
-let produtosSelecionados = [];
+let bancoProdutos = [];
 
-const logins = {
-  "Designer": "Lopes@2025"
-};
-
-fetch('produtos_unicode_completo.json')
-  .then(res => res.json())
+fetch('produtos_unicode_final_completo.json')
+  .then(response => response.json())
   .then(data => {
     bancoProdutos = data;
-    console.log("Banco carregado:", Object.keys(bancoProdutos).length, "produtos");
+    console.log("Banco carregado:", bancoProdutos.length, "produtos");
+  })
+  .catch(error => {
+    console.error("Erro ao carregar o banco de dados:", error);
   });
 
-document.getElementById("botao-login").addEventListener("click", () => {
-  const user = document.getElementById("usuario").value;
-  const pass = document.getElementById("senha").value;
+// Login simples
+document.getElementById('botao-login').addEventListener('click', function () {
+  const usuario = document.getElementById('usuario').value;
+  const senha = document.getElementById('senha').value;
 
-  if (logins[user] === pass) {
-    document.getElementById("login-screen").classList.add("hidden");
-    document.getElementById("main-content").classList.remove("hidden");
+  if ((usuario === "Designer" && senha === "Lopes@2025") || (usuario === "Teste" && senha === "1234")) {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('main-content').classList.remove('hidden');
   } else {
-    document.getElementById("erro-login").innerText = "Usuário ou senha incorretos.";
+    document.getElementById('erro-login').innerText = "Usuário ou senha incorretos.";
   }
 });
 
+const produtosAdicionados = [];
+
 function adicionarProduto() {
-  const codigo = document.getElementById("codigo").value.trim();
-  const preco = document.getElementById("preco").value.trim();
+  const codigo = document.getElementById('codigo').value.trim();
+  const preco = document.getElementById('preco').value.trim();
 
-  if (!codigo) return alert("Informe o código do produto.");
+  if (!codigo) {
+    alert("Informe o código do produto.");
+    return;
+  }
 
-  const produto = bancoProdutos[codigo];
-  if (!produto) return alert("Código não encontrado no banco de dados.");
+  const produto = bancoProdutos.find(p => p.codigo == codigo);
 
-  produtosSelecionados.push({ ...produto, preco });
-  atualizarTabela();
-  document.getElementById("codigo").value = "";
-  document.getElementById("preco").value = "";
-}
+  if (!produto) {
+    alert("Código não encontrado no banco de dados.");
+    return;
+  }
 
-function atualizarTabela() {
-  const tabela = document.getElementById("tabela");
-  tabela.innerHTML = "";
-  produtosSelecionados.forEach(p => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${p.codigo}</td>
-      <td>${p.nome}</td>
-      <td>${p.preco || ""}</td>
-      <td>${p.departamento || ""}</td>
-      <td>${p.marca || ""}</td>
-      <td>${p.logo || ""}</td>
-      <td>${p.imagem || ""}</td>
-      <td>${gerarTextoUnicode(p)}</td>
-    `;
-    tabela.appendChild(tr);
-  });
-}
+  const precoFormatado = preco ? preco.replace(',', '.') : "";
+  const textoUnicode = [
+    produto.codigo,
+    produto.nome,
+    precoFormatado,
+    `CÓD. ${produto.codigo}`,
+    produto.departamento || "",
+    produto.descricao || produto.nome || "",
+    produto.marca || "",
+    produto.logo || "",
+    produto.imagem || ""
+  ].join('\t');
 
-function gerarTextoUnicode(p) {
-  const codigo2 = `CÓD. ${p.codigo}`;
-  const campos = [
-    p.codigo,
-    p.nome,
-    p.preco || "",
-    codigo2,
-    p.departamento || "",
-    p.nome,
-    p.marca || "",
-    p.logo || "",
-    p.imagem || ""
-  ];
-  return campos.join("\t");
+  produtosAdicionados.push(textoUnicode);
+
+  const linha = document.createElement('tr');
+  linha.innerHTML = `
+    <td>${produto.codigo}</td>
+    <td>${produto.nome}</td>
+    <td>${preco}</td>
+    <td>${produto.departamento || ""}</td>
+    <td>${produto.marca || ""}</td>
+    <td>${produto.logo || ""}</td>
+    <td>${produto.imagem || ""}</td>
+    <td>${textoUnicode}</td>
+  `;
+  document.getElementById('tabela').appendChild(linha);
+
+  document.getElementById('codigo').value = '';
+  document.getElementById('preco').value = '';
 }
 
 function baixarTXT() {
-  if (produtosSelecionados.length === 0) return alert("Nenhum produto adicionado.");
+  const cabecalho = "CODIGO\tDESCRIÇÃO\tPRECO\tCODIGO2\tDEPTO\tDESCRICAO\tMARCA\t@FOTOMARCA\t@FOTOPRODUTO";
+  const conteudo = [cabecalho, ...produtosAdicionados].join('\r\n');
 
-  let conteudo = "CODIGO\tDESCRIÇÃO\tPRECO\tCODIGO2\tDEPTO\tDESCRICAO\tMARCA\t@FOTOMARCA\t@FOTOPRODUTO\n";
-  produtosSelecionados.forEach(p => {
-    conteudo += gerarTextoUnicode(p) + "\n";
-  });
-
-  const blob = new Blob([conteudo], { type: "text/plain;charset=utf-8" });
+  const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
 
-  const a = document.createElement("a");
+  const a = document.createElement('a');
   a.href = url;
-  a.download = "tabloide.txt";
+  a.download = 'produtos_unicode.txt';
   a.click();
+
   URL.revokeObjectURL(url);
 }
-
-// Função extra para colar múltiplos códigos + nomes
-function colarProdutosLote(texto) {
-  const linhas = texto.trim().split("\n");
-  linhas.forEach(linha => {
-    const partes = linha.trim().split(/\s+(.+)/);
-    const codigo = partes[0];
-    const produto = bancoProdutos[codigo];
-    if (produto && !produtosSelecionados.find(p => p.codigo === codigo)) {
-      produtosSelecionados.push({ ...produto, preco: "" });
-    }
-  });
-  atualizarTabela();
-}
-
-// Opcional: adicionar campo textarea para colar vários produtos
-window.colarProdutos = () => {
-  const texto = prompt("Cole aqui os códigos e nomes (ex: 12345 Nome do Produto):");
-  if (texto) colarProdutosLote(texto);
-};
