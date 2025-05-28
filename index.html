@@ -29,28 +29,37 @@
     button {
       cursor: pointer;
     }
+    textarea {
+      width: 100%;
+      height: 100px;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
-  <div id="main-content">
-    <h1>Gerador de Tabloide (Exporta InDesign)</h1>
+  <h1>Gerador de Tabloide (Exporta InDesign)</h1>
 
-    <label for="codigo">Código do Produto:</label>
-    <input type="text" id="codigo" />
-    <label for="preco">Preço:</label>
-    <input type="text" id="preco" />
-    <button onclick="adicionarProduto()">Adicionar Produto</button>
-    <button onclick="baixarTXT()">Exportar TXT</button>
+  <label for="listaProdutos">Colar lista de produtos:</label>
+  <textarea id="listaProdutos" placeholder="Cole aqui os produtos no formato: CÓDIGO - DESCRIÇÃO"></textarea>
+  <br>
+  <button onclick="adicionarEmLote()">Adicionar em Lote</button>
+  <br><br>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Código</th><th>Nome</th><th>Preço</th><th>Departamento</th><th>Marca</th><th>@Logo</th><th>@Imagem</th><th>Texto Unicode</th>
-        </tr>
-      </thead>
-      <tbody id="tabela"></tbody>
-    </table>
-  </div>
+  <label for="codigo">Código do Produto:</label>
+  <input type="text" id="codigo" />
+  <label for="preco">Preço:</label>
+  <input type="text" id="preco" />
+  <button onclick="adicionarProduto()">Adicionar Produto</button>
+  <button onclick="baixarTXT()">Exportar TXT</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Código</th><th>Nome</th><th>Preço</th><th>Departamento</th><th>Marca</th><th>@Logo</th><th>@Imagem</th><th>Texto Unicode</th>
+      </tr>
+    </thead>
+    <tbody id="tabela"></tbody>
+  </table>
 
   <script src="script.js"></script>
 </body>
