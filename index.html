@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Gerador de Tabloide</title>
   <style>
     body {
@@ -12,7 +12,7 @@
     h1 {
       text-align: center;
     }
-    input, button, textarea {
+    input, textarea, button {
       margin: 5px;
       padding: 8px;
     }
@@ -43,31 +43,32 @@
     .hidden {
       display: none;
     }
+    #erro-login {
+      color: red;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-
   <div id="login-screen">
     <h2>Acesso Restrito</h2>
     <input type="text" id="usuario" placeholder="Usuário" autocomplete="off" />
     <input type="password" id="senha" placeholder="Senha" autocomplete="off" />
     <button id="botao-login">Entrar</button>
-    <p id="erro-login" style="color: red;"></p>
+    <p id="erro-login"></p>
   </div>
 
   <div id="main-content" class="hidden">
     <h1>Gerador de Tabloide (Exporta InDesign)</h1>
 
-    <label for="codigo">Código do Produto:</label>
-    <input type="number" id="codigo" />
-    <label for="preco">Preço:</label>
+    <label for="codigo">Código(s) do Produto:</label><br>
+    <textarea id="codigo" rows="6" cols="50" placeholder="Cole aqui os códigos ou lista de produtos..."></textarea><br>
+
+    <label for="preco">Preço (opcional):</label>
     <input type="text" id="preco" />
+
     <button onclick="adicionarProduto()">Adicionar Produto</button>
     <button onclick="baixarTXT()">Exportar TXT</button>
-
-    <br>
-    <textarea id="lista-codigos" placeholder="Cole aqui a lista de códigos e nomes..." rows="5" style="width: 100%; margin-top: 10px;"></textarea>
-    <button onclick="colarLista()">Inserir em massa</button>
 
     <table>
       <thead>
@@ -79,31 +80,6 @@
     </table>
   </div>
 
-  <script>
-    // LOGIN
-    const loginScreen = document.getElementById('login-screen');
-    const mainContent = document.getElementById('main-content');
-    const botaoLogin = document.getElementById('botao-login');
-
-    const credenciais = [
-      { usuario: "Designer", senha: "Lopes@2025" },
-      { usuario: "Admin", senha: "1234" },
-      { usuario: "Teste", senha: "teste" }
-    ];
-
-    botaoLogin.addEventListener("click", () => {
-      const u = document.getElementById("usuario").value;
-      const s = document.getElementById("senha").value;
-      const autorizado = credenciais.some(c => c.usuario === u && c.senha === s);
-
-      if (autorizado) {
-        loginScreen.classList.add("hidden");
-        mainContent.classList.remove("hidden");
-      } else {
-        document.getElementById("erro-login").innerText = "Usuário ou senha incorretos.";
-      }
-    });
-  </script>
   <script src="script.js"></script>
 </body>
 </html>
