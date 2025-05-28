@@ -2,31 +2,34 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Gerador de Tabloide</title>
+  <title>Gerador de Tabloide (Exporta InDesign)</title>
   <style>
-    body { font-family: Arial; background: #f6f6f6; padding: 20px; }
+    body { font-family: Arial, sans-serif; background: #f8f8f8; padding: 20px; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
-    textarea, input { width: 100%; padding: 5px; margin-bottom: 10px; }
+    th, td { border: 1px solid #ccc; padding: 5px; text-align: left; }
+    textarea, input { width: 100%; margin-bottom: 10px; }
+    button { padding: 6px 12px; }
   </style>
 </head>
 <body>
+
   <h2>Gerador de Tabloide (Exporta InDesign)</h2>
 
-  <label for="lista">Colar lista de produtos:</label>
-  <textarea id="lista" rows="6"></textarea>
+  <label>Colar lista de produtos:</label>
+  <textarea id="loteInput" rows="5"></textarea>
   <button onclick="adicionarEmLote()">Adicionar em Lote</button>
 
-  <br /><br />
-  <label>Código do Produto:</label>
-  <input id="codigo" />
-  <label>Preço:</label>
-  <input id="preco" />
-  <button onclick="limparTabela()">Limpar Tabela</button>
-  <button onclick="adicionarProduto()">Adicionar Produto</button>
-  <button onclick="exportarTXT()">Exportar TXT</button>
+  <div style="margin-top: 10px;">
+    <label>Código do Produto:</label>
+    <input type="text" id="codigo" />
+    <label>Preço:</label>
+    <input type="text" id="preco" />
+    <button onclick="adicionarProduto()">Adicionar Produto</button>
+    <button onclick="exportarParaTXT()">Exportar TXT</button>
+    <button onclick="limparProdutos()">Limpar</button>
+  </div>
 
-  <table id="tabela">
+  <table>
     <thead>
       <tr>
         <th>Código</th>
@@ -39,7 +42,7 @@
         <th>Texto Unicode</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="tabelaProdutos"></tbody>
   </table>
 
   <script src="script.js"></script>
