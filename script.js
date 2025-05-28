@@ -1,4 +1,3 @@
-
 async function sha256(text) {
   const msgBuffer = new TextEncoder().encode(text);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -6,8 +5,11 @@ async function sha256(text) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Usuários autorizados (login:senha em SHA-256)
 const usuariosAutorizados = {
-  "Designer": "6d42e7b5fcf8ee30523896b3d81a5b80eb0a78699ce944c1b4ad44ac3c87df76"
+  "Designer": "6d42e7b5fcf8ee30523896b3d81a5b80eb0a78699ce944c1b4ad44ac3c87df76", // Lopes@2025
+  "Admin": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4", // 1234
+  "Teste": "11c8273f9e9a73543fc153692a964b3d859ac7d1b78f681bfa4ec1938db5b845"  // teste@2025
 };
 
 async function fazerLogin() {
@@ -30,6 +32,7 @@ async function fazerLogin() {
 }
 
 window.addEventListener("load", () => {
+  document.getElementById("botao-login").addEventListener("click", fazerLogin);
   if (sessionStorage.getItem("logado") === "sim") {
     document.getElementById("login-screen").style.display = "none";
     document.getElementById("main-content").classList.remove("hidden");
@@ -51,9 +54,9 @@ function adicionarProduto() {
     alert("Código não encontrado no banco de dados.");
     return;
   }
-  const logo = `\\10.1.1.85\mkt\Comercial\@LOGOS PRODUTOS\${produto.marca}.jpg`;
-  const imagem = `\\172.30.217.2\winthor\IMAGEM\${codigo}.jpg`;
-  const unicode = `${codigo}	${produto.nome}	${preco}	CÓD. ${codigo}	${produto.nome}	${produto.marca}	${logo}	${imagem}`;
+  const logo = `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${produto.marca}.jpg`;
+  const imagem = `\\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg`;
+  const unicode = `${codigo}\t${produto.nome}\t${preco}\tCÓD. ${codigo}\t${produto.nome}\t${produto.marca}\t${logo}\t${imagem}`;
 
   linhas.push(unicode);
 
