@@ -1,25 +1,24 @@
-// Lista de usuários permitidos
 const usuariosAutorizados = [
   { user: "Designer", pass: "Lopes@2025" },
   { user: "Teste", pass: "1234" }
 ];
 
-// Função de login
-document.getElementById("botao-login").addEventListener("click", () => {
-  const usuario = document.getElementById("usuario").value.trim();
-  const senha = document.getElementById("senha").value.trim();
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("botao-login").addEventListener("click", () => {
+    const usuario = document.getElementById("usuario").value.trim();
+    const senha = document.getElementById("senha").value.trim();
 
-  const autorizado = usuariosAutorizados.some(u => u.user === usuario && u.pass === senha);
+    const autorizado = usuariosAutorizados.some(u => u.user === usuario && u.pass === senha);
 
-  if (autorizado) {
-    document.getElementById("login-screen").classList.add("hidden");
-    document.getElementById("main-content").classList.remove("hidden");
-  } else {
-    document.getElementById("erro-login").innerText = "Usuário ou senha incorretos.";
-  }
+    if (autorizado) {
+      document.getElementById("login-screen").classList.add("hidden");
+      document.getElementById("main-content").classList.remove("hidden");
+    } else {
+      document.getElementById("erro-login").innerText = "Usuário ou senha incorretos.";
+    }
+  });
 });
 
-// Dados
 let bancoProdutos = [];
 
 fetch("produtos_unicode_completo.json")
@@ -32,7 +31,6 @@ fetch("produtos_unicode_completo.json")
 function adicionarProduto() {
   const codigo = document.getElementById("codigo").value.trim();
   const preco = document.getElementById("preco").value.trim();
-
   const produto = bancoProdutos.find(p => p.codigo === codigo);
 
   if (!produto) {
@@ -43,7 +41,7 @@ function adicionarProduto() {
   const tabela = document.getElementById("tabela");
   const linha = tabela.insertRow();
 
-  const textoUnicode = `${codigo} ${produto.nome} ${preco ? preco : ""} CÓD. ${codigo} ${produto.nome} ${produto.marca} \\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${produto.logo} \\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg`;
+  const unicode = `${codigo} ${produto.nome} ${preco ? preco : ""} CÓD. ${codigo} ${produto.nome} ${produto.marca} \\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${produto.logo} \\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg`;
 
   linha.innerHTML = `
     <td>${codigo}</td>
@@ -53,14 +51,13 @@ function adicionarProduto() {
     <td>${produto.marca}</td>
     <td>\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${produto.logo}</td>
     <td>\\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg</td>
-    <td>${textoUnicode}</td>
+    <td>${unicode}</td>
   `;
 }
 
 function baixarTXT() {
   const linhas = [];
-  const rows = document.querySelectorAll("#tabela tr");
-  rows.forEach(row => {
+  document.querySelectorAll("#tabela tr").forEach(row => {
     const cols = row.querySelectorAll("td");
     const texto = cols[7]?.innerText;
     if (texto) linhas.push(texto);
