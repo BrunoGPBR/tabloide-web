@@ -6,91 +6,104 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #fff;
-      margin: 0;
-      padding: 0;
+      padding: 20px;
+      background: #f7f7f7;
     }
-
-    #login-screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #fff;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
+    h1 {
+      text-align: center;
     }
-
-    .hidden {
-      display: none !important;
-    }
-
-    input, button {
-      padding: 10px;
+    input, button, textarea {
       margin: 5px;
-      width: 200px;
+      padding: 8px;
     }
-
-    #main-content {
-      padding: 30px;
-    }
-
     table {
       width: 100%;
       margin-top: 20px;
       border-collapse: collapse;
     }
-
     th, td {
       border: 1px solid #ccc;
       padding: 8px;
       text-align: left;
     }
-
-    h1 {
-      margin-top: 0;
+    button {
+      cursor: pointer;
+    }
+    #login-screen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 9999;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
+
   <div id="login-screen">
     <h2>Acesso Restrito</h2>
-    <input type="text" id="usuario" placeholder="Usuário" />
-    <input type="password" id="senha" placeholder="Senha" />
+    <input type="text" id="usuario" placeholder="Usuário" autocomplete="off" />
+    <input type="password" id="senha" placeholder="Senha" autocomplete="off" />
     <button id="botao-login">Entrar</button>
-    <p id="erro-login" style="color:red;"></p>
+    <p id="erro-login" style="color: red;"></p>
   </div>
 
   <div id="main-content" class="hidden">
     <h1>Gerador de Tabloide (Exporta InDesign)</h1>
-    <label>Código do Produto:</label>
+
+    <label for="codigo">Código do Produto:</label>
     <input type="number" id="codigo" />
-    <label>Preço:</label>
+    <label for="preco">Preço:</label>
     <input type="text" id="preco" />
     <button onclick="adicionarProduto()">Adicionar Produto</button>
     <button onclick="baixarTXT()">Exportar TXT</button>
 
+    <br>
+    <textarea id="lista-codigos" placeholder="Cole aqui a lista de códigos e nomes..." rows="5" style="width: 100%; margin-top: 10px;"></textarea>
+    <button onclick="colarLista()">Inserir em massa</button>
+
     <table>
       <thead>
         <tr>
-          <th>Código</th>
-          <th>Nome</th>
-          <th>Preço</th>
-          <th>Departamento</th>
-          <th>Marca</th>
-          <th>@Logo</th>
-          <th>@Imagem</th>
-          <th>Texto Unicode</th>
+          <th>Código</th><th>Nome</th><th>Preço</th><th>Departamento</th><th>Marca</th><th>@Logo</th><th>@Imagem</th><th>Texto Unicode</th>
         </tr>
       </thead>
       <tbody id="tabela"></tbody>
     </table>
   </div>
 
+  <script>
+    // LOGIN
+    const loginScreen = document.getElementById('login-screen');
+    const mainContent = document.getElementById('main-content');
+    const botaoLogin = document.getElementById('botao-login');
+
+    const credenciais = [
+      { usuario: "Designer", senha: "Lopes@2025" },
+      { usuario: "Admin", senha: "1234" },
+      { usuario: "Teste", senha: "teste" }
+    ];
+
+    botaoLogin.addEventListener("click", () => {
+      const u = document.getElementById("usuario").value;
+      const s = document.getElementById("senha").value;
+      const autorizado = credenciais.some(c => c.usuario === u && c.senha === s);
+
+      if (autorizado) {
+        loginScreen.classList.add("hidden");
+        mainContent.classList.remove("hidden");
+      } else {
+        document.getElementById("erro-login").innerText = "Usuário ou senha incorretos.";
+      }
+    });
+  </script>
   <script src="script.js"></script>
 </body>
 </html>
