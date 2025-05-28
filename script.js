@@ -59,7 +59,7 @@ function adicionarProduto() {
 
   const textoUnicode = produto.unicode
     .replace("[PRECO]", preco)
-    .replace("[DEPTO]", "GERAL"); // ou outro departamento fixo se desejar
+    .replace("[DEPTO]", "GERAL"); // Você pode trocar "GERAL" por outro departamento
 
   linha.innerHTML = `
     <td>${produto.codigo}</td>
