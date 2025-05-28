@@ -1,71 +1,89 @@
-const usuariosAutorizados = [
-  { user: "Designer", pass: "Lopes@2025" },
-  { user: "Teste", pass: "1234" }
-];
+let produtos = [];
+let tabela = document.getElementById("tabela");
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("botao-login").addEventListener("click", () => {
-    const usuario = document.getElementById("usuario").value.trim();
-    const senha = document.getElementById("senha").value.trim();
-
-    const autorizado = usuariosAutorizados.some(u => u.user === usuario && u.pass === senha);
-
-    if (autorizado) {
-      document.getElementById("login-screen").classList.add("hidden");
-      document.getElementById("main-content").classList.remove("hidden");
-    } else {
-      document.getElementById("erro-login").innerText = "Usuário ou senha incorretos.";
-    }
+// Carregar banco de dados JSON
+fetch("produtos_unicode_final_completo.json")
+  .then((response) => response.json())
+  .then((data) => {
+    produtos = data;
+  })
+  .catch((error) => {
+    console.error("Erro ao carregar o JSON:", error);
   });
+
+// Função de login
+document.getElementById("botao-login").addEventListener("click", function () {
+  const user = document.getElementById("usuario").value;
+  const pass = document.getElementById("senha").value;
+
+  const validUsers = [
+    { usuario: "Designer", senha: "Lopes@2025" },
+    { usuario: "teste", senha: "1234" }
+  ];
+
+  const autorizado = validUsers.some(
+    (credencial) => credencial.usuario === user && credencial.senha === pass
+  );
+
+  if (autorizado) {
+    document.getElementById("login-screen").classList.add("hidden");
+    document.getElementById("main-content").classList.remove("hidden");
+  } else {
+    document.getElementById("erro-login").textContent = "Usuário ou senha incorretos.";
+  }
 });
 
-let bancoProdutos = [];
-
-fetch("produtos_unicode_completo.json")
-  .then(res => res.json())
-  .then(data => {
-    bancoProdutos = data;
-    console.log("Banco carregado:", bancoProdutos.length, "produtos");
-  });
-
+// Função para adicionar produto à tabela
 function adicionarProduto() {
-  const codigo = document.getElementById("codigo").value.trim();
-  const preco = document.getElementById("preco").value.trim();
-  const produto = bancoProdutos.find(p => p.codigo === codigo);
+  const codigo = document.getElementById("codigo").value;
+  const preco = document.getElementById("preco").value;
 
-  if (!produto) {
-    alert("Código não encontrado no banco de dados.");
-    return;
+  const produto = produtos.find(p => p.codigo === codigo);
+
+  if (produto) {
+    const imagem = `\\\\172.30.217.2\\winthor\\IMAGEM/${codigo}.jpg`;
+    const logo = `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS/${produto.logo}`;
+    const unicode = `${codigo} - ${produto.nome} - ${preco}`;
+
+    const linha = `
+      <tr>
+        <td>${codigo}</td>
+        <td>${produto.nome}</td>
+        <td>${preco}</td>
+        <td>${produto.departamento}</td>
+        <td>${produto.marca}</td>
+        <td>${logo}</td>
+        <td>${imagem}</td>
+        <td>${unicode}</td>
+      </tr>
+    `;
+
+    tabela.innerHTML += linha;
+  } else {
+    alert("Produto não encontrado!");
   }
 
-  const tabela = document.getElementById("tabela");
-  const linha = tabela.insertRow();
-
-  const unicode = `${codigo} ${produto.nome} ${preco ? preco : ""} CÓD. ${codigo} ${produto.nome} ${produto.marca} \\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${produto.logo} \\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg`;
-
-  linha.innerHTML = `
-    <td>${codigo}</td>
-    <td>${produto.nome}</td>
-    <td>${preco}</td>
-    <td>${produto.departamento || ""}</td>
-    <td>${produto.marca}</td>
-    <td>\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${produto.logo}</td>
-    <td>\\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg</td>
-    <td>${unicode}</td>
-  `;
+  document.getElementById("codigo").value = "";
+  document.getElementById("preco").value = "";
 }
 
+// Função para exportar a tabela como arquivo .txt
 function baixarTXT() {
-  const linhas = [];
-  document.querySelectorAll("#tabela tr").forEach(row => {
-    const cols = row.querySelectorAll("td");
-    const texto = cols[7]?.innerText;
-    if (texto) linhas.push(texto);
-  });
+  let texto = "";
+  const linhas = tabela.querySelectorAll("tr");
 
-  const blob = new Blob([linhas.join("\n")], { type: "text/plain;charset=utf-8" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "tabloide_unicode.txt";
-  link.click();
+  for (let i = 0; i < linhas.length; i++) {
+    const colunas = linhas[i].querySelectorAll("td");
+    if (colunas.length > 0) {
+      texto += `${colunas[7].innerText}\r\n`; // Texto unicode
+    }
+  }
+
+  const blob = new Blob(["\ufeff" + texto], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "tabloide_unicode.txt";
+  a.click();
+  URL.revokeObjectURL(url);
 }
