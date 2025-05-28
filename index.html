@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Gerador de Tabloide</title>
   <style>
     body {
@@ -12,7 +12,7 @@
     h1 {
       text-align: center;
     }
-    input, textarea, button {
+    input, button {
       margin: 5px;
       padding: 8px;
     }
@@ -29,44 +29,16 @@
     button {
       cursor: pointer;
     }
-    #login-screen {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      z-index: 9999;
-    }
-    .hidden {
-      display: none;
-    }
-    #erro-login {
-      color: red;
-      margin-top: 10px;
-    }
   </style>
 </head>
 <body>
-  <div id="login-screen">
-    <h2>Acesso Restrito</h2>
-    <input type="text" id="usuario" placeholder="Usuário" autocomplete="off" />
-    <input type="password" id="senha" placeholder="Senha" autocomplete="off" />
-    <button id="botao-login">Entrar</button>
-    <p id="erro-login"></p>
-  </div>
-
-  <div id="main-content" class="hidden">
+  <div id="main-content">
     <h1>Gerador de Tabloide (Exporta InDesign)</h1>
 
-    <label for="codigo">Código(s) do Produto:</label><br>
-    <textarea id="codigo" rows="6" cols="50" placeholder="Cole aqui os códigos ou lista de produtos..."></textarea><br>
-
-    <label for="preco">Preço (opcional):</label>
+    <label for="codigo">Código do Produto:</label>
+    <input type="text" id="codigo" />
+    <label for="preco">Preço:</label>
     <input type="text" id="preco" />
-
     <button onclick="adicionarProduto()">Adicionar Produto</button>
     <button onclick="baixarTXT()">Exportar TXT</button>
 
