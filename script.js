@@ -53,3 +53,8 @@ function exportarTXT() {
   link.download = "produtos.txt";
   link.click();
 }
+
+function limparTabela() {
+  const corpo = document.querySelector("#tabela tbody");
+  corpo.innerHTML = "";
+}
