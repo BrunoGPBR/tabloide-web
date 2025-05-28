@@ -10,20 +10,49 @@
       margin: 0;
       padding: 0;
     }
+
     #login-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
       height: 100vh;
+      background: #fff;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      z-index: 10;
     }
+
+    .hidden {
+      display: none !important;
+    }
+
     input, button {
       padding: 10px;
       margin: 5px;
       width: 200px;
     }
-    .hidden {
-      display: none;
+
+    #main-content {
+      padding: 30px;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    h1 {
+      margin-top: 0;
     }
   </style>
 </head>
@@ -45,10 +74,17 @@
     <button onclick="adicionarProduto()">Adicionar Produto</button>
     <button onclick="baixarTXT()">Exportar TXT</button>
 
-    <table border="1" width="100%" style="margin-top: 20px;">
+    <table>
       <thead>
         <tr>
-          <th>Código</th><th>Nome</th><th>Preço</th><th>Departamento</th><th>Marca</th><th>@Logo</th><th>@Imagem</th><th>Texto Unicode</th>
+          <th>Código</th>
+          <th>Nome</th>
+          <th>Preço</th>
+          <th>Departamento</th>
+          <th>Marca</th>
+          <th>@Logo</th>
+          <th>@Imagem</th>
+          <th>Texto Unicode</th>
         </tr>
       </thead>
       <tbody id="tabela"></tbody>
