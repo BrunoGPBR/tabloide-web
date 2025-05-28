@@ -1,83 +1,89 @@
+let produtosBanco = [];
 let produtosSelecionados = [];
-let bancoDados = [];
 
 fetch('produtos_unicode_final_completo.json')
   .then(response => response.json())
-  .then(data => bancoDados = data);
+  .then(data => {
+    produtosBanco = data;
+    console.log(`Banco carregado: ${produtosBanco.length} produtos`);
+  });
 
-function adicionarProduto() {
-  const codigo = document.getElementById("codigo").value.trim();
-  const preco = document.getElementById("preco").value.trim();
-  if (!codigo) return alert("Informe um código de produto.");
+function adicionarProduto(codigo, preco = '--') {
+  const produto = produtosBanco.find(p => p.codigo === codigo);
+  if (!produto) return;
 
-  const produto = bancoDados.find(p => p.codigo == codigo);
-  if (!produto) return alert("Produto não encontrado no banco.");
+  const logo = "@" + produto.logo;
+  const imagem = "@" + produto.codigo + ".jpg";  // Geração automática
+  const textoUnicode = `${produto.codigo} ${produto.nome} -- CÓD. ${produto.codigo} ${produto.nome} ${produto.marca} ${logo}`;
 
-  produto.preco = preco || "--";
-  produtosSelecionados.push(produto);
+  const novoProduto = {
+    codigo: produto.codigo,
+    nome: produto.nome,
+    preco: preco,
+    departamento: produto.departamento || '',
+    marca: produto.marca,
+    logo: logo,
+    imagem: imagem,
+    textoUnicode: textoUnicode
+  };
+
+  produtosSelecionados.push(novoProduto);
   atualizarTabela();
 }
 
 function adicionarEmLote() {
-  const texto = document.getElementById("loteInput").value.trim();
-  const linhas = texto.split("\n");
-
-  for (let linha of linhas) {
+  const linhas = document.getElementById('entradaLote').value.trim().split('\n');
+  linhas.forEach(linha => {
     const partes = linha.trim().split(/\s+/);
     const codigo = partes[0];
-    const produto = bancoDados.find(p => p.codigo == codigo);
-    if (produto && !produtosSelecionados.some(p => p.codigo == codigo)) {
-      produto.preco = "--";
-      produtosSelecionados.push(produto);
-    }
-  }
-
-  atualizarTabela();
+    adicionarProduto(codigo);
+  });
 }
 
 function atualizarTabela() {
-  const tbody = document.getElementById("tabelaProdutos");
-  tbody.innerHTML = "";
+  const tabela = document.getElementById('tabelaProdutos');
+  tabela.innerHTML = '';
 
-  for (let p of produtosSelecionados) {
-    const linha = `
-      <tr>
-        <td>${p.codigo}</td>
-        <td>${p.nome}</td>
-        <td>${p.preco || "--"}</td>
-        <td>${p.departamento}</td>
-        <td>${p.marca}</td>
-        <td>${p.logo}</td>
-        <td>${p.imagem}</td>
-        <td>${p.codigo}\t${p.nome}\t${p.preco || "--"}\tCÓD. ${p.codigo}\t${p.departamento}\t${p.nome}\t${p.marca}\t${p.logo}\t${p.imagem}</td>
-      </tr>
-    `;
-    tbody.innerHTML += linha;
-  }
+  produtosSelecionados.forEach(produto => {
+    const linha = tabela.insertRow();
+    linha.insertCell(0).innerText = produto.codigo;
+    linha.insertCell(1).innerText = produto.nome;
+    linha.insertCell(2).innerText = produto.preco;
+    linha.insertCell(3).innerText = produto.departamento;
+    linha.insertCell(4).innerText = produto.marca;
+    linha.insertCell(5).innerText = produto.logo;
+    linha.insertCell(6).innerText = produto.imagem;
+    linha.insertCell(7).innerText = produto.textoUnicode;
+  });
 }
 
-function limparProdutos() {
-  produtosSelecionados = [];
-  document.getElementById("tabelaProdutos").innerHTML = "";
-}
-
-function exportarParaTXT() {
-  if (produtosSelecionados.length === 0) return alert("Nenhum produto para exportar.");
-
-  let conteudo = "CODIGO\tDESCRIÇÃO\tPRECO\tCODIGO2\tDEPTO\tDESCRICAO\tMARCA\t@FOTOMARCA\t@FOTOPRODUTO\n";
-  
-  for (let p of produtosSelecionados) {
-    conteudo += `${p.codigo}\t${p.nome}\t${p.preco || "--"}\tCÓD. ${p.codigo}\t${p.departamento}\t${p.nome}\t${p.marca}\t${p.logo}\t${p.imagem}\n`;
-  }
-
-  const blob = new Blob([new TextEncoder("utf-16le").encode(conteudo)], {
-    type: "text/plain;charset=utf-16le"
+function exportarTXT() {
+  const cabecalho = "CODIGO\tDESCRIÇÃO\tPRECO\tCODIGO2\tDEPTO\tDESCRICAO\tMARCA\t@FOTOMARCA\t@FOTOPRODUTO\n";
+  const linhas = produtosSelecionados.map(p => {
+    return [
+      p.codigo,
+      p.nome,
+      p.preco,
+      `CÓD. ${p.codigo}`,
+      p.departamento,
+      p.nome,
+      p.marca,
+      `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${p.logo.replace('@', '')}`,
+      `\\\\172.30.217.2\\winthor\\IMAGEM\\${p.codigo}.jpg`
+    ].join('\t');
   });
 
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
+  const conteudo = cabecalho + linhas.join('\n');
+  const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-16le' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
   a.href = url;
-  a.download = "tabloide_unicode.txt";
+  a.download = 'tabloide_exportado.txt';
   a.click();
-  window.URL.revokeObjectURL(url);
+  URL.revokeObjectURL(url);
+}
+
+function limparTabela() {
+  produtosSelecionados = [];
+  atualizarTabela();
 }
