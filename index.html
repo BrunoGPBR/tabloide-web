@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerador de Tabloide</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f7f7f7;
+    }
+    h1 {
+      text-align: center;
+    }
+    input, button {
+      margin: 5px;
+      padding: 8px;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    button {
+      cursor: pointer;
+    }
+    #login-screen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 9999;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="login-screen">
+    <h2>Acesso Restrito</h2>
+    <input type="text" id="usuario" placeholder="Usuário" autocomplete="off" />
+    <input type="password" id="senha" placeholder="Senha" autocomplete="off" />
+    <button onclick="fazerLogin()">Entrar</button>
+    <p id="erro-login" style="color: red;"></p>
+  </div>
+
+  <div id="main-content" class="hidden">
+    <h1>Gerador de Tabloide (Exporta InDesign)</h1>
+    <label for="codigo">Código do Produto:</label>
+    <input type="number" id="codigo" />
+    <label for="preco">Preço:</label>
+    <input type="text" id="preco" />
+    <button onclick="adicionarProduto()">Adicionar Produto</button>
+    <button onclick="baixarTXT()">Exportar TXT</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th><th>Nome</th><th>Preço</th><th>Departamento</th><th>Marca</th><th>@Logo</th><th>@Imagem</th><th>Texto Unicode</th>
+        </tr>
+      </thead>
+      <tbody id="tabela"></tbody>
+    </table>
+  </div>
+
+  <script>
+    async function sha256(text) {
+      const msgBuffer = new TextEncoder().encode(text);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    const usuariosAutorizados = {
+      "Designer": "6d42e7b5fcf8ee30523896b3d81a5b80eb0a78699ce944c1b4ad44ac3c87df76"
+    };
+
+    async function fazerLogin() {
+      const user = document.getElementById("usuario").value.trim();
+      const pass = document.getElementById("senha").value.trim();
+
+      if (!user || !pass) {
+        document.getElementById("erro-login").textContent = "Preencha usuário e senha.";
+        return;
+      }
+
+      const hash = await sha256(pass);
+      if (usuariosAutorizados[user] === hash) {
+        sessionStorage.setItem("logado", "sim");
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("main-content").classList.remove("hidden");
+      } else {
+        document.getElementById("erro-login").textContent = "Usuário ou senha incorretos.";
+      }
+    }
+
+    window.addEventListener("load", () => {
+      if (sessionStorage.getItem("logado") === "sim") {
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("main-content").classList.remove("hidden");
+      }
+    });
+
+    let banco = {};
+    const linhas = [];
+
+    fetch('produtos.json')
+      .then(response => response.json())
+      .then(data => banco = Object.fromEntries(data.map(p => [p.codigo, p])));
+
+    function adicionarProduto() {
+      const codigo = document.getElementById("codigo").value;
+      const preco = document.getElementById("preco").value;
+      const produto = banco[codigo];
+      if (!produto) {
+        alert("Código não encontrado no banco de dados.");
+        return;
+      }
+      const logo = `\\10.1.1.85\mkt\Comercial\@LOGOS PRODUTOS\${produto.marca}.jpg`;
+      const imagem = `\\172.30.217.2\winthor\IMAGEM\${codigo}.jpg`;
+      const unicode = `${codigo}	${produto.nome}	${preco}	CÓD. ${codigo}	${produto.nome}	${produto.marca}	${logo}	${imagem}`;
+
+      linhas.push(unicode);
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${codigo}</td><td>${produto.nome}</td><td>${preco}</td><td>${produto.departamento}</td><td>${produto.marca}</td><td>${logo}</td><td>${imagem}</td><td>${unicode}</td>`;
+      document.getElementById("tabela").appendChild(tr);
+    }
+
+    function baixarTXT() {
+      const blob = new Blob([linhas.join("
+")], { type: "text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "tabloide-unicode.txt";
+      link.click();
+    }
+  </script>
+</body>
+</html>
