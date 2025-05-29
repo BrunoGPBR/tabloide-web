@@ -3,55 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <title>Gerador de Tabloide (Exporta InDesign)</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f9f9f9;
-    }
-    textarea, input, button {
-      margin-top: 10px;
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-    }
-    button {
-      cursor: pointer;
-      margin-right: 10px;
-    }
-    table {
-      width: 100%;
-      margin-top: 20px;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-    h2 {
-      margin-bottom: 20px;
-    }
-  </style>
 </head>
 <body>
   <h2>Gerador de Tabloide (Exporta InDesign)</h2>
 
-  <label>Colar lista de produtos:</label>
-  <textarea id="entradaLote" rows="4"></textarea>
-  <button onclick="adicionarLote()">Adicionar em Lote</button>
+  <label>Colar lista de produtos:</label><br>
+  <textarea id="entradaLote" rows="4" style="width:100%"></textarea><br><br>
 
-  <label>Código do Produto:</label>
-  <input type="text" id="codigo">
+  <button onclick="adicionarLote()">Adicionar em Lote</button><br><br>
 
-  <label>Preço:</label>
-  <input type="text" id="preco">
+  <label>Código do Produto:</label><br>
+  <input type="text" id="codigo" style="width:100%"><br><br>
+
+  <label>Preço:</label><br>
+  <input type="text" id="preco" style="width:100%"><br><br>
 
   <button onclick="adicionarProduto()">Adicionar Produto</button>
   <button onclick="baixarTXT()">Exportar TXT</button>
-  <button onclick="limparTudo()">Limpar</button>
+  <button onclick="limparTudo()">Limpar</button><br><br>
 
-  <table>
+  <table border="1" width="100%">
     <thead>
       <tr>
         <th>Código</th>
@@ -67,6 +38,7 @@
     <tbody id="tabela"></tbody>
   </table>
 
+  <!-- Use o script atualizado -->
   <script src="script_corrigido.js"></script>
 </body>
 </html>
