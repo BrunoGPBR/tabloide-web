@@ -1,94 +1,98 @@
-let produtos = [];
-let dadosJson = [];
+let produtosJson = [];
+let produtosAdicionados = [];
 
-fetch("produtos_unicode_final_completo.json")
-  .then((response) => response.json())
-  .then((dados) => {
-    dadosJson = dados;
-  });
-
-function adicionarProduto() {
-  const codigo = document.getElementById("codigo").value.trim();
-  const preco = document.getElementById("preco").value.trim().replace(",", ".");
-
-  if (!codigo || !preco) return;
-
-  const produto = dadosJson.find(p => String(p.codigo).replace(".0", "") === codigo);
-
-  if (!produto) {
-    alert("Produto não encontrado no banco de dados.");
-    return;
-  }
-
-  const marca = produto.marca || "SEM MARCA";
-  const nome = produto.nome || "SEM NOME";
-  const imagem = `\\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg`;
-  const logo = `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${marca}.jpg`;
-
-  const unicode = `${codigo}\t${nome}\t${preco}\t${codigo}\tMATERIAL\t${nome}\t${marca}\t${logo}\t${imagem}`;
-
-  produtos.push({ codigo, nome, preco, marca, imagem, logo, unicode });
-  atualizarTabela();
-}
-
-function adicionarLote() {
-  const lote = prompt("Cole aqui a lista (formato: CÓDIGO TAB NOME)");
-  if (!lote) return;
-
-  const linhas = lote.trim().split("\n");
-  linhas.forEach(linha => {
-    const partes = linha.trim().split("\t");
-    const codigo = partes[0];
-    const produto = dadosJson.find(p => String(p.codigo).replace(".0", "") === codigo);
-
-    if (produto) {
-      const marca = produto.marca || "SEM MARCA";
-      const nome = produto.nome || "SEM NOME";
-      const imagem = `\\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg`;
-      const logo = `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${marca}.jpg`;
-      const unicode = `${codigo}\t${nome}\t\t${codigo}\tMATERIAL\t${nome}\t${marca}\t${logo}\t${imagem}`;
-      produtos.push({ codigo, nome, preco: "", marca, imagem, logo, unicode });
-    }
-  });
-
-  atualizarTabela();
-}
-
-function baixarTXT() {
-  const BOM = "\uFEFF";
-  const conteudo = produtos.map(p => p.unicode).join("\n");
-  const blob = new Blob([BOM + conteudo], { type: "text/plain;charset=utf-16le" });
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "produtos_unicode.txt";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
+fetch('produtos_unicode_final_completo.json')
+  .then(response => response.json())
+  .then(data => {
+    produtosJson = data;
+    console.log("Banco carregado:", produtosJson.length, "produtos");
+  })
+  .catch(err => console.error("Erro ao carregar JSON:", err));
 
 function limparTabela() {
-  produtos = [];
+  produtosAdicionados = [];
   atualizarTabela();
 }
 
 function atualizarTabela() {
-  const tabela = document.getElementById("tabela");
-  tabela.innerHTML = "";
-
-  produtos.forEach((p) => {
+  const tbody = document.querySelector("tbody");
+  tbody.innerHTML = "";
+  produtosAdicionados.forEach(produto => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${p.codigo}</td>
-      <td>${p.nome}</td>
-      <td>${p.preco}</td>
-      <td>MATERIAL</td>
-      <td>${p.marca}</td>
-      <td>${p.logo}</td>
-      <td>${p.imagem}</td>
-      <td><textarea readonly style="width: 100%">${p.unicode}</textarea></td>
-    `;
-    tabela.appendChild(tr);
+    [
+      produto.codigo,
+      produto.nome,
+      produto.preco,
+      produto.departamento,
+      produto.marca,
+      produto.logoPath,
+      produto.imagemPath,
+      produto.textoUnicode
+    ].forEach(val => {
+      const td = document.createElement("td");
+      td.textContent = val;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
   });
+}
+
+function normalizarMarcaParaLogo(marca) {
+  if (!marca) return "SEM_LOGO";
+  let termo = marca.split("-")[0].trim().toUpperCase();
+  termo = termo.replace(/[^\w\s]/gi, '').replace(/\s+/g, '_');
+  return `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${termo}.jpg`;
+}
+
+function adicionarProduto(codigo, preco) {
+  const produto = produtosJson.find(p => String(p.CODIGO) === String(codigo));
+  if (!produto) return;
+
+  const nome = produto.DESCRICAO || "";
+  const cod2 = `CÓD. ${produto.CODIGO}`;
+  const depto = produto.DEPARTAMENTO || "MATERIAL";
+  const marca = produto.MARCA || "";
+  const precoFormatado = Number(preco).toFixed(2).replace(".", ",");
+  const logoPath = normalizarMarcaParaLogo(marca);
+  const imagemPath = `\\\\172.30.217.2\\winthor\\IMAGEM\\${produto.CODIGO}.jpg`;
+  const textoUnicode = `${produto.CODIGO}\t${nome}\t${precoFormatado}\t${cod2}\t${depto}\t${nome}\t${marca}\t${logoPath}\t${imagemPath}`;
+
+  produtosAdicionados.push({
+    codigo: produto.CODIGO,
+    nome,
+    preco: precoFormatado,
+    departamento: depto,
+    marca,
+    logoPath,
+    imagemPath,
+    textoUnicode
+  });
+
+  atualizarTabela();
+}
+
+function adicionarEmLote() {
+  const texto = document.getElementById("listaLote").value.trim();
+  const linhas = texto.split("\n");
+  linhas.forEach(linha => {
+    const partes = linha.trim().split(" ");
+    const codigo = partes[0];
+    adicionarProduto(codigo, "0");
+  });
+}
+
+function exportarTXT() {
+  if (produtosAdicionados.length === 0) return;
+
+  const header = "CODIGO\tDESCRIÇÃO\tPRECO\tCODIGO2\tDEPTO\tDESCRICAO\tMARCA\t@FOTOMARCA\t@FOTOPRODUTO";
+  const linhas = produtosAdicionados.map(p => p.textoUnicode);
+  const conteudo = [header, ...linhas].join("\r\n");
+
+  const blob = new Blob([new TextEncoder("utf-16le").encode(conteudo)], {
+    type: "text/plain;charset=utf-16le"
+  });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "tabloide_exportado.txt";
+  link.click();
 }
