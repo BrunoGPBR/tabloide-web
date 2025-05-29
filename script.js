@@ -1,89 +1,113 @@
-let produtosBanco = [];
+let produtos = [];
 let produtosSelecionados = [];
 
-fetch('produtos_unicode_final_completo.json')
-  .then(response => response.json())
-  .then(data => {
-    produtosBanco = data;
-    console.log(`Banco carregado: ${produtosBanco.length} produtos`);
-  });
+async function carregarProdutos() {
+  const resposta = await fetch("produtos_unicode_final_completo.json");
+  produtos = await resposta.json();
+}
 
-function adicionarProduto(codigo, preco = '--') {
-  const produto = produtosBanco.find(p => p.codigo === codigo);
-  if (!produto) return;
+function normalizarCodigo(codigo) {
+  return String(codigo).replace(/\.0$/, "").trim();
+}
 
-  const logo = "@" + produto.logo;
-  const imagem = "@" + produto.codigo + ".jpg";  // Geração automática
-  const textoUnicode = `${produto.codigo} ${produto.nome} -- CÓD. ${produto.codigo} ${produto.nome} ${produto.marca} ${logo}`;
+function adicionarProduto() {
+  const codigo = document.getElementById("codigo").value.trim();
+  const preco = document.getElementById("preco").value.trim();
+  adicionarProdutoManual(codigo, preco);
+  document.getElementById("codigo").value = "";
+  document.getElementById("preco").value = "";
+}
 
-  const novoProduto = {
-    codigo: produto.codigo,
+function adicionarProdutoManual(codigo, preco) {
+  const produto = produtos.find(p => String(p.codigo) === String(codigo));
+  if (!produto) {
+    alert(`Produto ${codigo} não encontrado no banco.`);
+    return;
+  }
+
+  const codigoLimpo = normalizarCodigo(produto.codigo);
+  const logoLimpo = normalizarCodigo(produto.logo);
+
+  const linha = {
+    codigo: codigoLimpo,
     nome: produto.nome,
-    preco: preco,
-    departamento: produto.departamento || '',
-    marca: produto.marca,
-    logo: logo,
-    imagem: imagem,
-    textoUnicode: textoUnicode
+    preco,
+    departamento: produto.departamento || "",
+    marca: produto.marca || "",
+    logo: `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${logoLimpo}.jpg`,
+    imagem: `\\\\172.30.217.2\\winthor\\IMAGEM\\${codigoLimpo}.jpg`
   };
 
-  produtosSelecionados.push(novoProduto);
+  produtosSelecionados.push(linha);
   atualizarTabela();
 }
 
-function adicionarEmLote() {
-  const linhas = document.getElementById('entradaLote').value.trim().split('\n');
+function adicionarLote() {
+  const input = prompt("Cole os produtos (formato: CÓDIGO TAB NOME):");
+  if (!input) return;
+
+  const linhas = input.trim().split("\n");
   linhas.forEach(linha => {
     const partes = linha.trim().split(/\s+/);
     const codigo = partes[0];
-    adicionarProduto(codigo);
+    const preco = "0,00";
+    adicionarProdutoManual(codigo, preco);
   });
 }
 
 function atualizarTabela() {
-  const tabela = document.getElementById('tabelaProdutos');
-  tabela.innerHTML = '';
+  const tabela = document.getElementById("tabela");
+  tabela.innerHTML = "";
 
-  produtosSelecionados.forEach(produto => {
-    const linha = tabela.insertRow();
-    linha.insertCell(0).innerText = produto.codigo;
-    linha.insertCell(1).innerText = produto.nome;
-    linha.insertCell(2).innerText = produto.preco;
-    linha.insertCell(3).innerText = produto.departamento;
-    linha.insertCell(4).innerText = produto.marca;
-    linha.insertCell(5).innerText = produto.logo;
-    linha.insertCell(6).innerText = produto.imagem;
-    linha.insertCell(7).innerText = produto.textoUnicode;
+  produtosSelecionados.forEach(prod => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${prod.codigo}</td>
+      <td>${prod.nome}</td>
+      <td>${prod.preco}</td>
+      <td>${prod.departamento}</td>
+      <td>${prod.marca}</td>
+      <td>${prod.logo}</td>
+      <td>${prod.imagem}</td>
+      <td>${gerarLinhaUnicode(prod)}</td>
+    `;
+    tabela.appendChild(tr);
   });
 }
 
-function exportarTXT() {
-  const cabecalho = "CODIGO\tDESCRIÇÃO\tPRECO\tCODIGO2\tDEPTO\tDESCRICAO\tMARCA\t@FOTOMARCA\t@FOTOPRODUTO\n";
-  const linhas = produtosSelecionados.map(p => {
-    return [
-      p.codigo,
-      p.nome,
-      p.preco,
-      `CÓD. ${p.codigo}`,
-      p.departamento,
-      p.nome,
-      p.marca,
-      `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${p.logo.replace('@', '')}`,
-      `\\\\172.30.217.2\\winthor\\IMAGEM\\${p.codigo}.jpg`
-    ].join('\t');
-  });
+function gerarLinhaUnicode(prod) {
+  return [
+    prod.codigo,
+    prod.nome,
+    prod.preco,
+    prod.codigo,
+    prod.departamento,
+    prod.nome,
+    prod.marca,
+    prod.logo,
+    prod.imagem
+  ].join("\t");
+}
 
-  const conteudo = cabecalho + linhas.join('\n');
-  const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-16le' });
+function baixarTXT() {
+  if (produtosSelecionados.length === 0) {
+    alert("Nenhum produto adicionado!");
+    return;
+  }
+
+  const conteudo = produtosSelecionados.map(gerarLinhaUnicode).join("\r\n");
+  const blob = new Blob(["\ufeff" + conteudo], { type: "text/plain;charset=utf-16le" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
-  a.download = 'tabloide_exportado.txt';
+  a.download = "produtos_unicode.txt";
   a.click();
   URL.revokeObjectURL(url);
 }
 
-function limparTabela() {
+function limparTudo() {
   produtosSelecionados = [];
   atualizarTabela();
 }
+
+carregarProdutos();
