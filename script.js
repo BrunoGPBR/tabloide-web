@@ -1,79 +1,57 @@
 let produtos = [];
-fetch('produtos_unicode_final_completo.json')
-  .then(response => response.json())
-  .then(data => {
-    produtos = data;
-  })
-  .catch(error => {
-    alert("Erro ao carregar o banco de dados: " + error);
-  });
-
 const tabela = document.getElementById("tabela");
 
-function buscarProduto(codigo) {
-  return produtos.find(p => p.codigo.toString() === codigo.toString());
+fetch("produtos_unicode_final_completo.json")
+  .then(response => response.json())
+  .then(data => produtos = data)
+  .catch(() => alert("Erro ao carregar o banco de dados."));
+
+function limparTudo() {
+  tabela.innerHTML = "";
 }
 
-function adicionarProduto(codigoManual = null, precoManual = null) {
-  const codigo = codigoManual || document.getElementById("codigo").value.trim();
-  const preco = precoManual || document.getElementById("preco").value.trim() || "0,00";
+function adicionarLote() {
+  const linhas = document.getElementById("entradaLote").value.trim().split("\n");
+  linhas.forEach(linha => {
+    const codigo = linha.split(/\s+/)[0];
+    adicionarLinhaPorCodigo(codigo);
+  });
+}
 
-  const produto = buscarProduto(codigo);
+function adicionarProduto() {
+  const codigo = document.getElementById("codigo").value.trim();
+  const preco = document.getElementById("preco").value.trim();
+  adicionarLinhaPorCodigo(codigo, preco);
+}
 
+function adicionarLinhaPorCodigo(codigo, precoManual = "") {
+  const produto = produtos.find(p => p.CODIGO == codigo);
   if (!produto) {
     alert("Produto não encontrado no banco de dados.");
     return;
   }
 
-  const linha = document.createElement("tr");
-
-  const caminhoLogo = `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${produto.logo}`;
-  const caminhoImagem = `\\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg`;
-
-  const textoUnicode = [
-    codigo,
-    produto.nome,
+  const preco = precoManual || "0,00";
+  const logo = `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${produto.MARCA?.split(" - ")[0]}.jpg`;
+  const imagem = `\\\\172.30.217.2\\winthor\\IMAGEM\\${produto.CODIGO}.jpg`;
+  const linha = [
+    produto.CODIGO,
+    produto.DESCRICAO,
     preco,
-    `CÓD. ${codigo}`,
-    produto.departamento || "MATERIAL",
-    produto.nome,
-    produto.marca,
-    caminhoLogo,
-    caminhoImagem
-  ].join("\t");
-
-  const colunas = [
-    codigo,
-    produto.nome,
-    preco,
-    produto.departamento || "MATERIAL",
-    produto.marca,
-    caminhoLogo,
-    caminhoImagem,
-    textoUnicode
+    produto.DEPTO || "MATERIAL",
+    produto.MARCA,
+    logo,
+    imagem,
+    `${produto.CODIGO}\t${produto.DESCRICAO}\t${preco}\tCÓD. ${produto.CODIGO}\t${produto.DEPTO || "MATERIAL"}\t${produto.DESCRICAO}\t${produto.MARCA}\t${logo}\t${imagem}`
   ];
 
-  colunas.forEach(conteudo => {
+  const tr = document.createElement("tr");
+  linha.forEach(valor => {
     const td = document.createElement("td");
-    td.textContent = conteudo;
-    linha.appendChild(td);
+    td.textContent = valor;
+    tr.appendChild(td);
   });
-
-  tabela.appendChild(linha);
-
-  // Limpar campos
-  if (!codigoManual) document.getElementById("codigo").value = "";
-  if (!precoManual) document.getElementById("preco").value = "";
-}
-
-function adicionarLote() {
-  const lista = document.getElementById("entradaLote").value.trim().split("\n");
-
-  lista.forEach(linha => {
-    const partes = linha.trim().split(/\s+/);
-    const codigo = partes[0];
-    adicionarProduto(codigo, "0,00");
-  });
+  tabela.appendChild(tr);
 }
 
 function baixarTXT() {
@@ -89,18 +67,15 @@ function baixarTXT() {
     }
   });
 
-  const blob = new Blob([`\ufeff${linhas.join("\n")}`], { type: "text/plain;charset=utf-16le" });
+  const textoFinal = `\ufeff${linhas.join("\r\n")}`;
+  const encoder = new TextEncoder("utf-16le");
+  const buffer = encoder.encode(textoFinal);
+  const blob = new Blob([buffer], { type: "text/plain;charset=utf-16le" });
+
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "produtos_unicode.txt";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-}
-
-function limparTudo() {
-  tabela.innerHTML = "";
-  document.getElementById("entradaLote").value = "";
-  document.getElementById("codigo").value = "";
-  document.getElementById("preco").value = "";
 }
