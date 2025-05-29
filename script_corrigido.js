@@ -1,64 +1,69 @@
+let bancoDados = {};
+let produtosAdicionados = [];
 
-let bancoProdutos = [];
-let produtosSelecionados = [];
-
-fetch("produtos_unicode_final_completo_corrigido.json")
-  .then((res) => res.json())
-  .then((data) => {
-    bancoProdutos = data;
-    console.log("Banco carregado:", bancoProdutos.length, "produtos");
+// Carregar JSON
+fetch('produtos_unicode_final_completo.json')
+  .then(res => res.json())
+  .then(json => {
+    bancoDados = json;
   });
 
 function adicionarProduto() {
-  const codigo = document.getElementById("codigo").value.trim();
+  const codigoInput = document.getElementById("codigo").value.trim();
   const preco = document.getElementById("preco").value.trim();
+  const codigo = codigoInput.replace(/\.0$/, "");
 
-  const produto = bancoProdutos.find(p => p.codigo === codigo);
-  if (!produto) {
-    alert("Produto não encontrado!");
+  if (!bancoDados[codigo]) {
+    alert("Produto não encontrado no banco de dados.");
     return;
   }
 
-  const dep = "MATERIAL";
-  const marca = String(produto.marca).replace(".0", "");
+  const produto = bancoDados[codigo];
   const nome = produto.nome;
-  const logo = `\\10.1.1.85\mkt\Comercial\@LOGOS PRODUTOS\${produto.logo.replace(".0.jpg", ".jpg")}`;
-  const imagem = `\\172.30.217.2\winthor\IMAGEM\${produto.codigo}.jpg`;
-  const textoUnicode = `${produto.codigo} ${produto.nome}`;
+  const marca = produto.marca || "SEM MARCA";
+  const depto = produto.departamento || "";
+  const imagem = `\\\\10.1.1.85\\mkt\\Comercial\\@FOTOS SITE\\${codigo}.jpg`;
+  const logo = `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${produto.logo || marca}.jpg`;
 
-  produtosSelecionados.push({ codigo, nome, preco, departamento: dep, marca, logo, imagem, textoUnicode });
-  atualizarTabela();
-}
+  const linha = `${codigo}\t${nome}\t${preco}\t${codigo}\t${depto}\t${nome}\t${marca}\t${logo}\t${imagem}`;
 
-function adicionarLote() {
-  const linhas = document.getElementById("entradaLote").value.trim().split("\n");
-
-  linhas.forEach(linha => {
-    const partes = linha.trim().split(" ");
-    const codigo = partes[0];
-    const preco = "0,00";
-
-    const produto = bancoProdutos.find(p => p.codigo === codigo);
-    if (!produto) return;
-
-    const dep = "MATERIAL";
-    const marca = String(produto.marca).replace(".0", "");
-    const nome = produto.nome;
-    const logo = `\\10.1.1.85\mkt\Comercial\@LOGOS PRODUTOS\${produto.logo.replace(".0.jpg", ".jpg")}`;
-    const imagem = `\\172.30.217.2\winthor\IMAGEM\${produto.codigo}.jpg`;
-    const textoUnicode = `${produto.codigo} ${produto.nome}`;
-
-    produtosSelecionados.push({ codigo, nome, preco, departamento: dep, marca, logo, imagem, textoUnicode });
+  produtosAdicionados.push({
+    codigo,
+    nome,
+    preco,
+    departamento: depto,
+    marca,
+    logo,
+    imagem,
+    linha
   });
 
   atualizarTabela();
+  document.getElementById("codigo").value = "";
+  document.getElementById("preco").value = "";
+}
+
+function adicionarLote() {
+  const entrada = document.getElementById("entradaLote").value.trim().split("\n");
+
+  entrada.forEach(linha => {
+    const partes = linha.trim().split(/\s+(.+)/);
+    if (partes.length < 2) return;
+    const codigo = partes[0].replace(/\.0$/, "");
+    const preco = "";
+    document.getElementById("codigo").value = codigo;
+    document.getElementById("preco").value = preco;
+    adicionarProduto();
+  });
+
+  document.getElementById("entradaLote").value = "";
 }
 
 function atualizarTabela() {
   const tbody = document.getElementById("tabela");
   tbody.innerHTML = "";
 
-  produtosSelecionados.forEach(p => {
+  produtosAdicionados.forEach(p => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${p.codigo}</td>
@@ -68,29 +73,26 @@ function atualizarTabela() {
       <td>${p.marca}</td>
       <td>${p.logo}</td>
       <td>${p.imagem}</td>
-      <td>${p.textoUnicode}</td>
+      <td>${p.linha}</td>
     `;
     tbody.appendChild(tr);
   });
 }
 
 function baixarTXT() {
-  const header = "CODIGO\tDESCRIÇÃO\tPRECO\tCODIGO2\tDEPTO\tDESCRICAO\tMARCA\t@FOTOMARCA\t@FOTOPRODUTO\n";
-  const linhas = produtosSelecionados.map(p => 
-    `${p.codigo}\t${p.nome}\t${p.preco}\tCÓD. ${p.codigo}\t${p.departamento}\t${p.nome}\t${p.marca}\t${p.logo}\t${p.imagem}`
-  );
-  const conteudo = header + linhas.join("\n");
-
-  const blob = new Blob(["\ufeff" + conteudo], { type: "text/plain;charset=utf-16le" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "produtos_unicode.txt";
-  a.click();
-  URL.revokeObjectURL(url);
+  const conteudo = produtosAdicionados.map(p => p.linha).join("\r\n");
+  const blob = new Blob([new TextEncoder("utf-16le").encode(conteudo)], {
+    type: "text/plain;charset=utf-16le"
+  });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "produtos_unicode.txt";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 function limparTudo() {
-  produtosSelecionados = [];
+  produtosAdicionados = [];
   atualizarTabela();
 }
