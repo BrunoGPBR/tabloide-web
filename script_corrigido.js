@@ -1,81 +1,124 @@
 let produtos = [];
-const tabela = document.getElementById("tabela");
+let produtosAdicionados = [];
 
-fetch("produtos_unicode_final_completo.json")
+fetch('produtos_unicode_final_completo.json')
   .then(response => response.json())
-  .then(data => produtos = data)
-  .catch(() => alert("Erro ao carregar o banco de dados."));
+  .then(data => {
+    produtos = data;
+    console.log("Banco de dados carregado:", produtos.length, "produtos.");
+  })
+  .catch(error => console.error("Erro ao carregar JSON:", error));
 
-function limparTudo() {
-  tabela.innerHTML = "";
+function removerDecimalDoCodigo(codigo) {
+  return codigo.toString().replace(/\.0+$/, '');
 }
 
-function adicionarLote() {
-  const linhas = document.getElementById("entradaLote").value.trim().split("\n");
-  linhas.forEach(linha => {
-    const codigo = linha.split(/\s+/)[0];
-    adicionarLinhaPorCodigo(codigo);
-  });
+function buscarProduto(codigo) {
+  const codigoLimpo = removerDecimalDoCodigo(codigo);
+  return produtos.find(p => removerDecimalDoCodigo(p.CODIGO) === codigoLimpo);
 }
 
 function adicionarProduto() {
-  const codigo = document.getElementById("codigo").value.trim();
-  const preco = document.getElementById("preco").value.trim();
-  adicionarLinhaPorCodigo(codigo, preco);
-}
+  const codigoInput = document.getElementById('codigo').value.trim();
+  const precoInput = document.getElementById('preco').value.trim();
 
-function adicionarLinhaPorCodigo(codigo, precoManual = "") {
-  const produto = produtos.find(p => p.CODIGO == codigo);
+  if (!codigoInput || !precoInput) {
+    alert("Preencha o código e o preço.");
+    return;
+  }
+
+  const produto = buscarProduto(codigoInput);
   if (!produto) {
     alert("Produto não encontrado no banco de dados.");
     return;
   }
 
-  const preco = precoManual || "0,00";
-  const logo = `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${produto.MARCA?.split(" - ")[0]}.jpg`;
-  const imagem = `\\\\172.30.217.2\\winthor\\IMAGEM\\${produto.CODIGO}.jpg`;
-  const linha = [
-    produto.CODIGO,
-    produto.DESCRICAO,
-    preco,
-    produto.DEPTO || "MATERIAL",
-    produto.MARCA,
-    logo,
-    imagem,
-    `${produto.CODIGO}\t${produto.DESCRICAO}\t${preco}\tCÓD. ${produto.CODIGO}\t${produto.DEPTO || "MATERIAL"}\t${produto.DESCRICAO}\t${produto.MARCA}\t${logo}\t${imagem}`
-  ];
+  const precoFormatado = precoInput.replace(',', '.');
 
-  const tr = document.createElement("tr");
-  linha.forEach(valor => {
-    const td = document.createElement("td");
-    td.textContent = valor;
-    tr.appendChild(td);
+  const linha = {
+    CODIGO: removerDecimalDoCodigo(produto.CODIGO),
+    DESCRICAO: produto.DESCRICAO || '',
+    PRECO: precoFormatado,
+    CODIGO2: produto.CODIGO2 || '',
+    DEPTO: produto.DEPTO || '',
+    DESCRICAO2: produto.DESCRICAO2 || '',
+    MARCA: produto.MARCA || '',
+    FOTOMARCA: produto.MARCA ? `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${produto.MARCA}.jpg` : '',
+    FOTOPRODUTO: `\\\\10.1.1.85\\mkt\\Comercial\\@IMAGENS PRODUTOS\\${removerDecimalDoCodigo(produto.CODIGO)}.jpg`
+  };
+
+  produtosAdicionados.push(linha);
+  atualizarTabela();
+}
+
+function adicionarLote() {
+  const entrada = document.getElementById('entradaLote').value.trim();
+  const linhas = entrada.split('\n');
+
+  linhas.forEach(linha => {
+    const partes = linha.split('\t');
+    const codigo = partes[0].trim();
+    const preco = partes.length > 1 ? partes[1].trim() : "0,00";
+
+    document.getElementById('codigo').value = codigo;
+    document.getElementById('preco').value = preco;
+    adicionarProduto();
   });
-  tabela.appendChild(tr);
+
+  document.getElementById('entradaLote').value = '';
+}
+
+function atualizarTabela() {
+  const tabela = document.getElementById('tabela');
+  tabela.innerHTML = '';
+
+  produtosAdicionados.forEach(prod => {
+    const linha = document.createElement('tr');
+    linha.innerHTML = `
+      <td>${prod.CODIGO}</td>
+      <td>${prod.DESCRICAO}</td>
+      <td>${prod.PRECO}</td>
+      <td>${prod.DEPTO}</td>
+      <td>${prod.MARCA}</td>
+      <td>${prod.FOTOMARCA}</td>
+      <td>${prod.FOTOPRODUTO}</td>
+      <td>${gerarLinhaUnicode(prod)}</td>
+    `;
+    tabela.appendChild(linha);
+  });
+}
+
+function gerarLinhaUnicode(prod) {
+  return `${prod.CODIGO}\t${prod.DESCRICAO}\t${prod.PRECO}\t${prod.CODIGO2}\t${prod.DEPTO}\t${prod.DESCRICAO2}\t${prod.MARCA}\t${prod.FOTOMARCA}\t${prod.FOTOPRODUTO}`;
 }
 
 function baixarTXT() {
-  const linhas = [];
-  const headers = ["CODIGO", "DESCRIÇÃO", "PRECO", "CODIGO2", "DEPTO", "DESCRICAO", "MARCA", "@FOTOMARCA", "@FOTOPRODUTO"];
-  linhas.push(headers.join("\t"));
+  if (produtosAdicionados.length === 0) {
+    alert("Nenhum produto adicionado.");
+    return;
+  }
 
-  tabela.querySelectorAll("tr").forEach(tr => {
-    const tds = tr.querySelectorAll("td");
-    if (tds.length === 8) {
-      const textoUnicode = tds[7].textContent;
-      linhas.push(textoUnicode);
-    }
+  let texto = 'CODIGO\tDESCRICAO\tPRECO\tCODIGO2\tDEPTO\tDESCRICAO\tMARCA\t@FOTOMARCA\t@FOTOPRODUTO\n';
+  produtosAdicionados.forEach(prod => {
+    texto += gerarLinhaUnicode(prod) + '\n';
   });
 
-  const textoFinal = `\ufeff${linhas.join("\r\n")}`;
-  const encoder = new TextEncoder("utf-16le");
-  const buffer = encoder.encode(textoFinal);
-  const blob = new Blob([buffer], { type: "text/plain;charset=utf-16le" });
+  const utf16le = new TextEncoder('utf-16le').encode(texto);
+  const bom = new Uint8Array([0xFF, 0xFE]);
+  const buffer = new Uint8Array(bom.length + utf16le.length);
+  buffer.set(bom, 0);
+  buffer.set(utf16le, bom.length);
 
-  const link = document.createElement("a");
+  const blob = new Blob([buffer], { type: 'text/plain;charset=utf-16le' });
+  const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = "produtos_unicode.txt";
-  document.body.appendChild(link);
+  link.download = 'produtos_unicode.txt';
   link.click();
-  document.body.removeChild(link);
+}
+
+function limparTudo() {
+  produtosAdicionados = [];
+  atualizarTabela();
+  document.getElementById('codigo').value = '';
+  document.getElementById('preco').value = '';
 }
