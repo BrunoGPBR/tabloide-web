@@ -26,7 +26,7 @@ function adicionarProduto() {
   const codigo = document.getElementById("codigo").value.trim();
   const preco = document.getElementById("preco").value.trim();
   if (!codigo) return alert("Informe o código do produto.");
-
+  
   const produto = buscarProduto(codigo);
   if (!produto) return alert("Produto não encontrado no banco de dados.");
 
@@ -98,7 +98,10 @@ function baixarTXT() {
     if (textoUnicode) linhas.push(textoUnicode);
   }
 
-  const blob = new Blob([`\ufeff${linhas.join('\n')}`], { type: 'text/plain;charset=utf-16le' });
+  const encoder = new TextEncoder("utf-16le");
+  const utf16Content = encoder.encode('\ufeff' + linhas.join('\n'));
+  const blob = new Blob([utf16Content], { type: 'text/plain;charset=utf-16le' });
+
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "produtos_unicode.txt";
