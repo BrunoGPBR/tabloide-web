@@ -26,7 +26,7 @@ function adicionarProduto() {
   const codigo = document.getElementById("codigo").value.trim();
   const preco = document.getElementById("preco").value.trim();
   if (!codigo) return alert("Informe o código do produto.");
-  
+
   const produto = buscarProduto(codigo);
   if (!produto) return alert("Produto não encontrado no banco de dados.");
 
@@ -34,20 +34,24 @@ function adicionarProduto() {
   adicionarNaTabela(produto);
 }
 
-// Adicionar lista em lote
+// ✅ Adicionar lista em lote (corrigido)
 function adicionarLote() {
   const texto = document.getElementById("entradaLote").value.trim();
   if (!texto) return;
 
   const linhas = texto.split('\n');
   linhas.forEach(linha => {
-    const codigo = linha.trim().split(/\s+/)[0];
-    if (!codigo) return;
+    const partes = linha.trim().split(/\s+/);
+    if (partes.length === 0) return;
 
+    const codigo = removeDecimalDoCodigo(partes[0]);
     const produto = buscarProduto(codigo);
+
     if (produto) {
       produto.preco = "0,00";
       adicionarNaTabela(produto);
+    } else {
+      console.warn(`Produto não encontrado: ${codigo}`);
     }
   });
 }
