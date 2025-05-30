@@ -89,21 +89,32 @@ function extrairPalavraChaveMarca(marca) {
   return palavras.find(p => p.length > 3) || palavras[0] || 'undefined';
 }
 
-// Exportar TXT em formato UTF-16 LE com tabulação
 function baixarTXT() {
   const linhas = [];
   const tabela = document.getElementById("tabela");
+
   for (let i = 0; i < tabela.rows.length; i++) {
     const textoUnicode = tabela.rows[i].cells[7]?.textContent || '';
     if (textoUnicode) linhas.push(textoUnicode);
   }
 
-  const blob = new Blob([`\ufeff${linhas.join('\n')}`], { type: 'text/plain;charset=utf-16le' });
+  const conteudo = linhas.join('\r\n');
+
+  // Codifica o conteúdo em UTF-16LE com BOM manualmente
+  const encoder = new TextEncoder('utf-16le');
+  const bom = new Uint8Array([0xFF, 0xFE]);
+  const encoded = encoder.encode(conteudo);
+  const finalData = new Uint8Array(bom.length + encoded.length);
+  finalData.set(bom, 0);
+  finalData.set(encoded, bom.length);
+
+  const blob = new Blob([finalData], { type: 'text/plain;charset=utf-16le' });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "produtos_unicode.txt";
   link.click();
 }
+
 
 // Limpar tudo
 function limparTudo() {
