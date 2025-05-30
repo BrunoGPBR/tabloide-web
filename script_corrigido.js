@@ -18,7 +18,7 @@ fetch('produtos_unicode_final_completo.json')
 // Buscar produto por código
 function buscarProduto(codigo) {
   const codLimpo = removeDecimalDoCodigo(codigo);
-  return produtos.find(p => removeDecimalDoCodigo(p.CODIGO) === codLimpo);
+  return produtos.find(p => removeDecimalDoCodigo(p.codigo) === codLimpo);
 }
 
 // Adicionar produto manualmente
@@ -49,7 +49,7 @@ function adicionarLote() {
       produto.preco = "0,00";
       adicionarNaTabela(produto);
     } else {
-      console.warn(`Produto não encontrado: ${codigo}`);
+      console.warn("Produto não encontrado:", codigo);
     }
   });
 }
@@ -60,15 +60,15 @@ function adicionarNaTabela(produto) {
   const linha = tabela.insertRow();
 
   const precoFormatado = produto.preco?.replace('.', ',') || "0,00";
-  const codigo = removeDecimalDoCodigo(produto.CODIGO);
-  const nome = produto.NOME || '';
-  const depto = produto.DEPTO || 'MATERIAL';
-  const marca = produto.MARCA || '';
+  const codigo = removeDecimalDoCodigo(produto.codigo);
+  const nome = produto.nome || '';
+  const depto = produto.departamento || 'MATERIAL';
+  const marca = produto.marca || '';
 
   const marcaLogo = extrairPalavraChaveMarca(marca);
   const caminhoLogo = `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${marcaLogo}.jpg`;
   const caminhoImagem = `\\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg`;
-  const textoUnicode = `${codigo}\t${nome}\t${precoFormatado}\tCÓD. ${codigo}\t${depto}\t${nome}\t${marca}\t${caminhoLogo}\t${caminhoImagem}`.trim();
+  const textoUnicode = `${codigo}\t${nome}\t${precoFormatado}\tCÓD. ${codigo}\t${depto}\t${nome}\t${marca}\t${caminhoLogo}\t${caminhoImagem}`;
 
   linha.insertCell().textContent = codigo;
   linha.insertCell().textContent = nome;
@@ -89,21 +89,16 @@ function extrairPalavraChaveMarca(marca) {
   return palavras.find(p => p.length > 3) || palavras[0] || 'undefined';
 }
 
-// Exportar TXT em formato UTF-16 LE com tabulação e quebras de linha \r\n
+// Exportar TXT em formato UTF-16 LE com tabulação
 function baixarTXT() {
   const linhas = [];
   const tabela = document.getElementById("tabela");
   for (let i = 0; i < tabela.rows.length; i++) {
-    const textoUnicode = tabela.rows[i].cells[7]?.textContent.trim() || '';
+    const textoUnicode = tabela.rows[i].cells[7]?.textContent || '';
     if (textoUnicode) linhas.push(textoUnicode);
   }
 
-  const conteudo = linhas.join("\r\n");
-  const encoder = new TextEncoder("utf-16le");
-  const encoded = encoder.encode(conteudo);
-  const bom = new Uint8Array([0xFF, 0xFE]);
-
-  const blob = new Blob([bom, encoded], { type: "text/plain" });
+  const blob = new Blob([`\ufeff${linhas.join('\n')}`], { type: 'text/plain;charset=utf-16le' });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "produtos_unicode.txt";
