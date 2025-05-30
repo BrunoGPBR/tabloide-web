@@ -18,7 +18,7 @@ fetch('produtos_unicode_final_completo.json')
 // Buscar produto por código
 function buscarProduto(codigo) {
   const codLimpo = removeDecimalDoCodigo(codigo);
-  return produtos.find(p => removeDecimalDoCodigo(p.CODIGO) === codLimpo);
+  return produtos.find(p => removeDecimalDoCodigo(p.codigo) === codLimpo);
 }
 
 // Adicionar produto manualmente
@@ -34,19 +34,17 @@ function adicionarProduto() {
   adicionarNaTabela(produto);
 }
 
-// ✅ Adicionar lista em lote (corrigido)
+// Adicionar lista em lote
 function adicionarLote() {
   const texto = document.getElementById("entradaLote").value.trim();
   if (!texto) return;
 
   const linhas = texto.split('\n');
   linhas.forEach(linha => {
-    const partes = linha.trim().split(/\s+/);
-    if (partes.length === 0) return;
+    const codigo = linha.trim().split(/\s+/)[0];
+    if (!codigo) return;
 
-    const codigo = removeDecimalDoCodigo(partes[0]);
     const produto = buscarProduto(codigo);
-
     if (produto) {
       produto.preco = "0,00";
       adicionarNaTabela(produto);
@@ -62,11 +60,11 @@ function adicionarNaTabela(produto) {
   const linha = tabela.insertRow();
 
   const precoFormatado = produto.preco?.replace('.', ',') || "0,00";
-  const codigo = removeDecimalDoCodigo(produto.CODIGO);
-  const nome = produto.NOME || '';
-  const depto = produto.DEPTO || 'MATERIAL';
-  const marca = produto.MARCA || '';
-  
+  const codigo = removeDecimalDoCodigo(produto.codigo);
+  const nome = produto.nome || '';
+  const depto = produto.departamento || 'MATERIAL';
+  const marca = produto.marca || '';
+
   const marcaLogo = extrairPalavraChaveMarca(marca);
   const caminhoLogo = `\\\\10.1.1.85\\mkt\\Comercial\\@LOGOS PRODUTOS\\${marcaLogo}.jpg`;
   const caminhoImagem = `\\\\172.30.217.2\\winthor\\IMAGEM\\${codigo}.jpg`;
